@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<token>
+  <guid>c5da4ed2cd56c5292606f49875026707</guid>
+  <id type="integer">101907</id>
+</token>
+
+curl -H "X-TrackerToken: c5da4ed2cd56c5292606f49875026707" -X GET "http://www.pivotaltracker.com/services/v3/projects/365149/activities?limit=50"
