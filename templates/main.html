@@ -1,5 +1,29 @@
 {% extends 'base.html' %}
+{% block head %}
+	 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+			['Date', 'Points'],
+			{% for story in data.iterations[0].stories %}
+				[{{ story.date }}, {{story.burndown}}] {% if not loop.last %},{% endif %}
+			{% endfor %}
+        ]);
+
+        var options = {
+          title: 'Iteration Burndown'
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+    </script>
+{% endblock %}
 {% block content %}
-	{{ data.test }}
-	{{ data.apa }}
+	<h1>Project: {{ data.project }}</h1>
+	<h2>Iteration start: {{ data.iterations[0].start }} Finish: {{ data.iterations[0].finish }}</h2>
+	<div id="chart_div" style="width: 900px; height: 500px;"></div>
+	{{ data.iterations[0] }}
 {% endblock %}
