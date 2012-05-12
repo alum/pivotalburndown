@@ -5,15 +5,35 @@
       google.load("visualization", "1", {packages:["corechart"]});
       google.setOnLoadCallback(drawChart);
       function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-			['Date', 'Points'],
-			{% for story in data.iterations[0].stories %}
-				[{{ story.date }}, {{story.burndown}}] {% if not loop.last %},{% endif %}
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Date');
+        data.addColumn('number', 'Burndown');
+        data.addColumn('number', 'Optimal');
+        data.addRows([
+			{% for date in data.dates_sorted %}
+				['{{ date }}', {{ data.dates[date] }}, {{ data.optimal_curve[date]}}] {% if not loop.last %},{% endif %}
 			{% endfor %}
         ]);
 
         var options = {
-          title: 'Iteration Burndown'
+          title: 'Iteration Burndown',
+          chartArea: {
+            width: '70%',
+            height: '78%'
+          },
+          backgroundColor: '#eee',
+          colors: ['#FF6342','#63C6DE','#ADDE63'],
+          animation:{
+            duration: 1000,
+            easing: 'out',
+          },
+          enableInteractivity: true,
+          focusTarget: 'category',
+          hAxis: { 
+            title: '',
+            textStyle: {color: '#000000', fontSize:'10'}
+          },
+          vAxis: {textPosition: 'in'}
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
@@ -23,7 +43,7 @@
 {% endblock %}
 {% block content %}
 	<h1>Project: {{ data.project }}</h1>
-	<h2>Iteration start: {{ data.iterations[0].start }} Finish: {{ data.iterations[0].finish }}</h2>
+	<h2>Start: {{ data.iterations[0].start.date() }}<br>Finish: {{ data.iterations[0].finish.date() }}</h2>
 	<div id="chart_div" style="width: 900px; height: 500px;"></div>
 	{{ data.iterations[0] }}
 {% endblock %}

@@ -1,0 +1,68 @@
+Metadata-Version: 1.0
+Name: busyflow.pivotal
+Version: 0.3.4
+Summary: Pivotal API client library.
+Home-page: http://github.com/nous-consulting/busyflow.pivotal/
+Author: Ignas Mikalajunas
+Author-email: ignas@nous.lt
+License: GPL
+Description: Pivotal API client library
+        ==========================
+        
+        Simple example
+        --------------
+        
+        If you don't have a token, get one using username and password (or
+        just pass it directly):
+        
+          >>> client = PivotalClient(token=None, cache='path/to/cache')
+          >>> token = client.token.active('username', 'password')['token']['guid']
+        
+          >>> client.token = token
+        
+        Get some projects:
+        
+          >>> projects = client.projects.all()['projects']
+        
+        Get current stories for a project:
+        
+          >>> iterations = client.iterations.current(projects[0]['id'])
+        
+          >>> storries_in_current_iteration = iterations[0]['iteration']['stories']
+        
+        This should probably be client.projects.iterations.current(), but using
+        flat structure at the moment.
+        
+        Missing methods and endpoints
+        -----------------------------
+        
+        Members::
+        
+          GET http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/memberships
+          POST http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/memberships
+          GET http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/memberships/$MEMBERSHIP_ID
+          DELETE http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/memberships/$MEMBERSHIP_ID
+        
+        Project::
+        
+          POST http://www.pivotaltracker.com/services/v3/projects - missing parameters
+          PUT http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/stories/deliver_all_finished
+        
+        Tasks::
+        
+          GET http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/stories/$STORY_ID/tasks/$TASK_ID
+          GET http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/stories/$STORY_ID/tasks
+          POST http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/stories/$STORY_ID/tasks?task\[description\]=clean%20shields
+          PUT http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/stories/$STORY_ID/tasks/$TASK_ID
+          DELETE http://www.pivotaltracker.com/services/v3/projects/$PROJECT_ID/stories/$STORY_ID/tasks/$TASK_ID
+        
+        (TODO find out whether it is possible to pass parameters to stories/projects throught URL)
+        
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Internet :: WWW/HTTP

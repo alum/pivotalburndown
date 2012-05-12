@@ -1,0 +1,4 @@
+setuptools
+xmlbuilder
+python-dateutil
+poster
