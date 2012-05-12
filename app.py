@@ -14,9 +14,9 @@ def main():
 	point_sum = sum(map(lambda x: 0 if 'estimate' not in x else x['estimate'], data['iterations'][0]['stories']))
 
 	# make a list of story states that are counted in the burndown, i.e. seen as "done"
-	accepted_states = ['accepted']
-	if 'include_states' in request.args:
-		accepted_states.extend(request.args['include_states'].split(','))
+	#accepted_states = ['accepted']
+	#if 'include_states' in request.args:
+	#	accepted_states.extend(request.args['include_states'].split(','))
 
 	# find max and min dates for accepted stories
 	for iteration in data['iterations']:
@@ -29,7 +29,7 @@ def main():
 
 	dates, dates_sorted = get_dates(iteration['start'].date(), iteration['finish'].date())
 
-	dates = get_burndown(point_sum, dates, dates_sorted, data, accepted_states)
+	dates = get_burndown(point_sum, dates, dates_sorted, data)
 	
 	#sorted(dates.iteritems(), key= lambda (k,v): (v,k))
 	data = { 'iterations':data['iterations'], 
@@ -39,14 +39,14 @@ def main():
 
 	return render_template('main.html', data=data)
 
-def get_burndown(point_sum, dates, dates_sorted, data, accepted_states):
+def get_burndown(point_sum, dates, dates_sorted, data):
 	burndown_sum = point_sum
 	for iteration in data['iterations']:
 		for date in dates_sorted:
 			if date > datetime.utcnow().date():
 				break
 			for story in iteration['stories']:
-				if story['updated_at'].date() == date and story['current_state'] in accepted_states and u'estimate' in story:
+				if u'accepted_at' in story and story['accepted_at'].date() == date and u'estimate' in story:
 					burndown_sum -= story['estimate']
 				dates[date] = burndown_sum
 	return dates
