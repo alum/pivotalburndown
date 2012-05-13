@@ -10,52 +10,64 @@ app = Flask(__name__)
 def main():
 	client = PivotalClient(token=settings.token, cache='')
 	#projects = client.projects.all()['projects']
-	data = client.iterations.current(settings.project_id)
-	point_sum = sum(map(lambda x: 0 if 'estimate' not in x else x['estimate'], data['iterations'][0]['stories']))
-
-	# make a list of story states that are counted in the burndown, i.e. seen as "done"
-	#accepted_states = ['accepted']
-	#if 'include_states' in request.args:
-	#	accepted_states.extend(request.args['include_states'].split(','))
-
-	# find max and min dates for accepted stories
+	#projects = client.projects.all()
+	#print projects
+	data = client.iterations.current(settings.project_id) # get the current iteration
+	data['iterations'].append(client.iterations.done(settings.project_id, offset=-1)['iterations'][0]	) # get the last iteration
+	
+	dates = {}
+	dates_sorted = {}
+	optimal_curve = {}
+	k = 0
 	for iteration in data['iterations']:
-		dates = []
+		#k = iteration['number']
+		point_sum = get_point_sum(iteration) # sum all points for iteration
+
+		dates[k] = []
+		dates_sorted[k] = []
 		for story in iteration['stories']:
 			if 'accepted_at' in story:
-				dates.append(story['accepted_at'])
-		iteration['min_date'] = min(dates).date()
-		iteration['max_date'] = max(dates).date()
+				dates[k].append(story['accepted_at'])
+		iteration['min_date'] = min(dates[k]).date()
+		iteration['max_date'] = max(dates[k]).date()
 
-	dates, dates_sorted = get_dates(iteration['start'].date(), iteration['finish'].date())
+		dates[k], dates_sorted[k] = get_dates(iteration['start'].date(), iteration['finish'].date())
+		dates[k] = get_burndown(point_sum, dates[k], dates_sorted[k], iteration)
 
-	dates = get_burndown(point_sum, dates, dates_sorted, data)
+		optimal_curve[k] = get_optimal_curve(dates_sorted[k], point_sum)
+		k += 1
 	
 	#sorted(dates.iteritems(), key= lambda (k,v): (v,k))
 	data = { 'iterations':data['iterations'], 
 			 'dates':dates, 
 			 'dates_sorted':dates_sorted, 
-			 'optimal_curve':get_optimal_curve(dates_sorted, point_sum) }
+			 'optimal_curve': optimal_curve }
+
+	print dates
 
 	return render_template('main.html', data=data)
 
-def get_burndown(point_sum, dates, dates_sorted, data):
+def get_point_sum(iteration):
+	return sum(map(lambda x: 0 if 'estimate' not in x else x['estimate'], iteration['stories']))
+
+def get_burndown(point_sum, dates, dates_sorted, iteration):
 	burndown_sum = point_sum
-	for iteration in data['iterations']:
-		for date in dates_sorted:
-			if date > datetime.utcnow().date():
-				break
-			for story in iteration['stories']:
-				if u'accepted_at' in story and story['accepted_at'].date() == date and u'estimate' in story:
-					burndown_sum -= story['estimate']
-				dates[date] = burndown_sum
+	for date in dates_sorted:
+		if date > datetime.utcnow().date():
+			break
+		for story in iteration['stories']:
+			if u'accepted_at' in story and story['accepted_at'].date() == date and u'estimate' in story:
+				burndown_sum -= story['estimate']
+			dates[date] = burndown_sum
 	return dates
 
 def get_dates(start_date, finish_date):
 	delta = finish_date - start_date
 	dates = {}
 	for x in xrange(delta.days + 1):
-		dates[start_date + timedelta(days=x)] = ''
+		date = start_date + timedelta(days=x)
+		if date.isoweekday() != 6 and date.isoweekday() != 7: # remove weekends
+			dates[date] = ''
 	
 	dates_sorted = dates.keys()
 	dates_sorted.sort()
