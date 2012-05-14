@@ -9,9 +9,6 @@ app = Flask(__name__)
 @app.route('/')
 def main():
 	client = PivotalClient(token=settings.token, cache='')
-	#projects = client.projects.all()['projects']
-	#projects = client.projects.all()
-	#print projects
 	data = client.iterations.current(settings.project_id) # get the current iteration
 	data['iterations'].append(client.iterations.done(settings.project_id, offset=-1)['iterations'][0]	) # get the last iteration
 	
@@ -37,13 +34,10 @@ def main():
 		optimal_curve[k] = get_optimal_curve(dates_sorted[k], point_sum)
 		k += 1
 	
-	#sorted(dates.iteritems(), key= lambda (k,v): (v,k))
 	data = { 'iterations':data['iterations'], 
 			 'dates':dates, 
 			 'dates_sorted':dates_sorted, 
 			 'optimal_curve': optimal_curve }
-
-	print dates
 
 	return render_template('main.html', data=data)
 
@@ -56,7 +50,7 @@ def get_burndown(point_sum, dates, dates_sorted, iteration):
 		if date > datetime.utcnow().date():
 			break
 		for story in iteration['stories']:
-			if u'accepted_at' in story and story['accepted_at'].date() == date and u'estimate' in story:
+			if 'accepted_at' in story and (story['accepted_at'].date() + timedelta(days=1)) == date and 'estimate' in story:
 				burndown_sum -= story['estimate']
 			dates[date] = burndown_sum
 	return dates
