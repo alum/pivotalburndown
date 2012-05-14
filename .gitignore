@@ -1,5 +1,6 @@
 # Project local settings
 settings.py
+venv
 
 # The rest
 *.py[co]
