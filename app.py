@@ -1,4 +1,5 @@
 import os
+import sys
 import pivotal
 import settings
 from busyflow.pivotal import *
@@ -22,12 +23,6 @@ def main():
 
 		dates[k] = []
 		dates_sorted[k] = []
-		for story in iteration['stories']:
-			if 'accepted_at' in story:
-				dates[k].append(story['accepted_at'])
-		iteration['min_date'] = min(dates[k]).date()
-		iteration['max_date'] = max(dates[k]).date()
-
 		dates[k], dates_sorted[k] = get_dates(iteration['start'].date(), iteration['finish'].date())
 		dates[k] = get_burndown(point_sum, dates[k], dates_sorted[k], iteration)
 
@@ -77,6 +72,7 @@ def get_optimal_curve(dates_sorted, total_points):
 
 if __name__ == '__main__':
 	# Bind to PORT if defined, otherwise default to 5000.
-	app.debug = True
+	if 'debug' in sys.argv:
+		app.debug = True
 	port = int(os.environ.get('PORT', 5000))
 	app.run(host='0.0.0.0', port=port)
