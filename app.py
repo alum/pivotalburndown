@@ -2,16 +2,30 @@ import os
 import sys
 import pivotal
 import settings
+from auth import requires_auth
 from busyflow.pivotal import *
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
+from functools import wraps
 from datetime import *
 app = Flask(__name__)
 
+
+client = PivotalClient(token=settings.token, cache='')
+
 @app.route('/')
+@requires_auth
 def main():
-	client = PivotalClient(token=settings.token, cache='')
-	data = client.iterations.current(settings.project_id) # get the current iteration
-	data['iterations'].append(client.iterations.done(settings.project_id, offset=-1)['iterations'][0]	) # get the last iteration
+	global client
+	#data = ((proj['name'], proj['id']) for proj in client.projects.all()['projects'])
+	data = client.projects.all()['projects']
+	return render_template('main.html', data=data)
+
+@app.route('/project/<int:project_id>')
+@requires_auth
+def project(project_id):
+	global client
+	data = client.iterations.current(project_id) # get the current iteration
+	data['iterations'].append(client.iterations.done(project_id, offset=-1)['iterations'][0]	) # get the last iteration
 	
 	dates = {}
 	dates_sorted = {}
@@ -36,7 +50,7 @@ def main():
 			 'dates_sorted':dates_sorted, 
 			 'optimal_curve': optimal_curve }
 
-	return render_template('main.html', data=data)
+	return render_template('project.html', data=data)
 
 def get_point_sum(iteration):
 	return sum(map(lambda x: 0 if 'estimate' not in x else x['estimate'], iteration['stories']))
