@@ -291,3 +291,14 @@ td { vertical-align: top; }
   p, h2, h3 { orphans: 3; widows: 3; }
   h2, h3 { page-break-after: avoid; }
 }
+
+
+/* CUSTOM STYLES BELOW */
+body { font: 'Helvetica Neue'; font-weight: 200; }
+.container { margin:0 auto; width:960px; }
+h1 { text-align:center; }
+.pull_left { float:left; }
+.pull_right { float:right; }
+a, a:visited { color: rgb(221,80,167); }
+.small { margin: 0px 0px 10px 0px; font-size: 80%; }
+.project_list { left:200px; position: relative;}

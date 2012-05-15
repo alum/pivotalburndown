@@ -1,51 +1,57 @@
 import os
+import sys
 import pivotal
 import settings
+from auth import requires_auth
 from busyflow.pivotal import *
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
+from functools import wraps
 from datetime import *
 app = Flask(__name__)
 
+
+client = PivotalClient(token=settings.token, cache='')
+
 @app.route('/')
+@requires_auth
 def main():
-	client = PivotalClient(token=settings.token, cache='')
-	#projects = client.projects.all()['projects']
-	#projects = client.projects.all()
-	#print projects
-	data = client.iterations.current(settings.project_id) # get the current iteration
-	data['iterations'].append(client.iterations.done(settings.project_id, offset=-1)['iterations'][0]	) # get the last iteration
+	global client
+	#data = ((proj['name'], proj['id']) for proj in client.projects.all()['projects'])
+	data = client.projects.all()['projects']
+	return render_template('main.html', data=data)
+
+@app.route('/project/<int:project_id>')
+@requires_auth
+def project(project_id):
+	global client
+	data = client.iterations.current(project_id) # get the current iteration
+	data['iterations'].append(client.iterations.done(project_id, offset=-1)['iterations'][0]	) # get the last iteration
 	
 	dates = {}
 	dates_sorted = {}
 	optimal_curve = {}
 	k = 0
 	for iteration in data['iterations']:
+
 		#k = iteration['number']
 		point_sum = get_point_sum(iteration) # sum all points for iteration
 
 		dates[k] = []
 		dates_sorted[k] = []
-		for story in iteration['stories']:
-			if 'accepted_at' in story:
-				dates[k].append(story['accepted_at'])
-		iteration['min_date'] = min(dates[k]).date()
-		iteration['max_date'] = max(dates[k]).date()
+		# finish date is always start date of the next iteration, so we must remove the last day
+		dates[k], dates_sorted[k] = get_dates(iteration['start'].date(), (iteration['finish'].date() + timedelta(days=-1)))
 
-		dates[k], dates_sorted[k] = get_dates(iteration['start'].date(), iteration['finish'].date())
 		dates[k] = get_burndown(point_sum, dates[k], dates_sorted[k], iteration)
 
 		optimal_curve[k] = get_optimal_curve(dates_sorted[k], point_sum)
 		k += 1
 	
-	#sorted(dates.iteritems(), key= lambda (k,v): (v,k))
 	data = { 'iterations':data['iterations'], 
 			 'dates':dates, 
 			 'dates_sorted':dates_sorted, 
 			 'optimal_curve': optimal_curve }
 
-	print dates
-
-	return render_template('main.html', data=data)
+	return render_template('project.html', data=data)
 
 def get_point_sum(iteration):
 	return sum(map(lambda x: 0 if 'estimate' not in x else x['estimate'], iteration['stories']))
@@ -56,7 +62,7 @@ def get_burndown(point_sum, dates, dates_sorted, iteration):
 		if date > datetime.utcnow().date():
 			break
 		for story in iteration['stories']:
-			if u'accepted_at' in story and story['accepted_at'].date() == date and u'estimate' in story:
+			if 'accepted_at' in story and (story['accepted_at'].date() + timedelta(days=1)) == date and 'estimate' in story:
 				burndown_sum -= story['estimate']
 			dates[date] = burndown_sum
 	return dates
@@ -83,6 +89,7 @@ def get_optimal_curve(dates_sorted, total_points):
 
 if __name__ == '__main__':
 	# Bind to PORT if defined, otherwise default to 5000.
-	app.debug = True
+	if 'debug' in sys.argv:
+		app.debug = True
 	port = int(os.environ.get('PORT', 5000))
 	app.run(host='0.0.0.0', port=port)
