@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block head %}
+	 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Date');
+        data.addColumn('number', 'Burndown');
+        data.addColumn('number', 'Optimal');
+        data.addRows([
+			{% for date in data.dates_sorted[0] %}
+				['{{ date }}', {{ data.dates[0][date] }}, {{ data.optimal_curve[0][date]}}] {% if not loop.last %},{% endif %}
+			{% endfor %}
+        ]);
+
+        var data_prev = new google.visualization.DataTable();
+        data_prev.addColumn('string', 'Date');
+        data_prev.addColumn('number', 'Burndown');
+        data_prev.addColumn('number', 'Optimal');
+        data_prev.addRows([
+      {% for date in data.dates_sorted[1] %}
+        ['{{ date }}', {{ data.dates[1][date] }}, {{ data.optimal_curve[1][date]}}] {% if not loop.last %},{% endif %}
+      {% endfor %}
+        ]);
+
+        var options = {
+          title: 'Iteration Burndown',
+          legend: {position: 'none'},
+          chartArea: {
+            width: '94%',
+            height: '75%'
+          },
+          backgroundColor: '#eee',
+          colors: ['#63C6DE','#ADDE63','#FF6342'],
+          animation:{
+            duration: 1000,
+            easing: 'out',
+          },
+          enableInteractivity: true,
+          focusTarget: 'category',
+          hAxis: { 
+            title: '',
+            textStyle: {color: '#000000', fontSize:'10'}
+          },
+          vAxis: {textPosition: 'in'}
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('current_iteration'));
+        var chart_prev = new google.visualization.LineChart(document.getElementById('previous_iteration'));
+        chart.draw(data, options);
+        chart_prev.draw(data_prev, options);
+      }
+    </script>
+{% endblock %}
+{% block content %}
+	<p class="pull_left"><a href="/">&lt;&lt; back</a><p><h1>Pivotal Burndown</h1>
+	<h2>Current iteration</h2>
+  <h3>Start: {{ data.iterations[0].start.date() }}<br>Finish: {{ data.iterations[0].finish.date() }}</h3>
+  <div class="chart" id="current_iteration" style="width: 900px; height: 500px;"></div>
+  <h2>Previous iteration</h2>
+  <h3>Start: {{ data.iterations[1].start.date() }}<br>Finish: {{ data.iterations[1].finish.date() }}</h3>
+  <div class="chart" id="previous_iteration" style="width: 900px; height: 500px;"></div>
+	{#{{ data.iterations[0] }}#}
+{% endblock %}
