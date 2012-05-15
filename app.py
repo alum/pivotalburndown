@@ -18,12 +18,14 @@ def main():
 	optimal_curve = {}
 	k = 0
 	for iteration in data['iterations']:
+			
 		#k = iteration['number']
 		point_sum = get_point_sum(iteration) # sum all points for iteration
 
 		dates[k] = []
 		dates_sorted[k] = []
-		dates[k], dates_sorted[k] = get_dates(iteration['start'].date(), iteration['finish'].date())
+		# finish date is always start date of the next iteration, so we must remove the last day
+		dates[k], dates_sorted[k] = get_dates(iteration['start'].date(), (iteration['finish'].date() + timedelta(days=-1)))
 		dates[k] = get_burndown(point_sum, dates[k], dates_sorted[k], iteration)
 
 		optimal_curve[k] = get_optimal_curve(dates_sorted[k], point_sum)

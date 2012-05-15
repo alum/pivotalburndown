@@ -1,7 +1,7 @@
 pivotalburndown
 ===============
 
-A small burndown chart that get data from the Pivotal Tracker API
+A small burndown chart that gets data from the Pivotal Tracker API. Uses busyflow.pivotal for getting stories.
 
 Installation
 ------------
@@ -32,6 +32,6 @@ This app has been prepared to run on Heroku.
 
 11. Push code to heroku: "git push heroku master"
 
-12. Scale the web worker to one process (free!): "heroku ps:scale web=1"
+12. Scale the web worker to one process (free!): "heroku ps:scale web=1". DONE!
 
 Heroku has an excellent guide to deployment: https://devcenter.heroku.com/articles/python
